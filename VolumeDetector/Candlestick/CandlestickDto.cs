@@ -1,9 +1,10 @@
 ﻿using Newtonsoft.Json;
 
-namespace VolumeDetector
+namespace VolumeDetector.Candlestick
 {
-    public class Candlestick
+    public class CandlestickDto
     {
+        #region HttpResponse Fields
         [JsonProperty("0")]
         public long OpenTime { get; set; }
 
@@ -39,6 +40,28 @@ namespace VolumeDetector
 
         [JsonProperty("11")]
         public string? Ignore { get; set; }
+        #endregion
+
+        #region Calculated Fields
+        public DateTime? OpenTimeDate
+        {
+            get
+            {
+                DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(OpenTime);
+                DateTime dateTime = dateTimeOffset.LocalDateTime;
+                return dateTime;
+            }
+        }
+
+        public DateTime? CloseTimeDate
+        {
+            get
+            {
+                DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(CloseTime);
+                DateTime dateTime = dateTimeOffset.LocalDateTime;
+                return dateTime;
+            }
+        }
 
         public decimal VolumePrice
         {
@@ -48,5 +71,14 @@ namespace VolumeDetector
                 return hlco4 * Volume;
             }
         }
+
+        public decimal Ohlc4
+        {
+            get
+            {
+                return (OpenPrice + ClosePrice + HighPrice + LowPrice) / 4;
+            }
+        }
+        #endregion
     }
 }

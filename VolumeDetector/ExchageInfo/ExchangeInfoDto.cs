@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System.Text.Json;
 
-namespace VolumeDetector
+namespace VolumeDetector.ExchageInfo
 {
-    public class ExchangeInfo
+    public class ExchangeInfoDto
     {
         [JsonProperty("timezone")]
         public string? TimeZone { get; set; }
@@ -12,16 +12,16 @@ namespace VolumeDetector
         public long ServerTime { get; set; }
 
         [JsonProperty("rateLimits")]
-        public List<RateLimit>? RateLimits { get; set; }
+        public List<RateLimitDto>? RateLimits { get; set; }
 
         [JsonProperty("exchangeFilters")]
         public List<string>? ExchangeFilters { get; set; }
 
         [JsonProperty("symbols")]
-        public List<Symbol>? Symbols { get; set; }
+        public List<SymbolDto>? Symbols { get; set; }
     }
 
-    public class RateLimit
+    public class RateLimitDto
     {
         [JsonProperty("rateLimitType")]
         public string? RateLimitType { get; set; }
@@ -36,9 +36,18 @@ namespace VolumeDetector
         public int Limit { get; set; }
     }
 
-    public class Symbol
+    public class SymbolDto
     {
         [JsonProperty("symbol")]
         public string? Name { get; set; }
+
+        [JsonProperty("status")]
+        public string? Status { get; set; }
+
+        public bool IsActive { 
+            get {
+                return Status == "TRADING";
+            } 
+        }
     }
 }

@@ -1,123 +1,74 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-
-using Newtonsoft.Json;
 using System.Text.RegularExpressions;
-using VolumeDetector;
+using VolumeDetector.Candlestick;
+using VolumeDetector.ExchageInfo;
+using VolumeDetector.Signals.PriceSignal;
+using VolumeDetector.Signals.Volume;
+using VolumeDetector.TickerPrice;
 
-string exchangeInfoUrl = $"https://api.binance.com/api/v3/exchangeInfo?&permissions=SPOT";
-List<string> pairs = new List<string>();
+var exchangeInfoClient = new ExchangeInfoClient();
+var exchangeInfo = await exchangeInfoClient.Get();
 
-HttpClient client = new HttpClient();
-HttpResponseMessage exchangeInfoResponse = await client.GetAsync(exchangeInfoUrl);
-exchangeInfoResponse.EnsureSuccessStatusCode();
-string exchangeInfoResponseBody = await exchangeInfoResponse.Content.ReadAsStringAsync();
-
-var exchangeInfos = JsonConvert.DeserializeObject<ExchangeInfo>(exchangeInfoResponseBody);
-
-var usdtSymbols = exchangeInfos?.Symbols?.Where(x =>
+var usdtSymbols = exchangeInfo?.Symbols?.Where(x =>
 {
     Regex regex = new Regex("USDT$");
     if (string.IsNullOrEmpty(x.Name))
         return false;
 
-    return regex.IsMatch(x.Name);
+    return regex.IsMatch(x.Name) && x.IsActive;
 }).ToList();
 
 if (usdtSymbols?.Any() == true)
 {
     foreach (var symbol in usdtSymbols)
     {
-        await CheckVolumeSignal(symbol?.Name, pairs);
+        await CheckSignal(symbol?.Name);
     }
 }
 
-//foreach (var pair in pairs)
-//{
-//    Console.WriteLine(pair);
-//}
-
 Console.WriteLine("Herhangi bir tuşa basınız...");
-Console.Read();
+Console.ReadKey();
 
-static async Task CheckVolumeSignal(string? symbol, List<string> pairs)
+static async Task CheckSignal(string? symbol)
 {
-    if (string.IsNullOrEmpty(symbol)) return;
-
-    string interval = "1m";
-    string candlestickUrl = $"https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}";
-
-    HttpClient client = new HttpClient();
-    HttpResponseMessage candleStickResponse = await client.GetAsync(candlestickUrl);
-    candleStickResponse.EnsureSuccessStatusCode();
-    string candlestickResponseBody = await candleStickResponse.Content.ReadAsStringAsync();
-
-    var candlesticks = JsonConvert.DeserializeObject<List<List<string>>>(candlestickResponseBody);
-
-    if (candlesticks?.Any() == true)
+    try
     {
-        List<Candlestick> list = new List<Candlestick>();
+        if (string.IsNullOrEmpty(symbol)) return;
 
-        foreach (var candleStick in candlesticks)
+        string interval = "15m";
+        int multiplier = 3;
+        var candlestickClient = new CandlestickClient(symbol, interval);
+        var candlesticks = await candlestickClient.Get();
+
+        var volumeSignalResult = new VolumeSignal(candlesticks, multiplier).GetSignal();
+
+        var currentPrice = await GetCurrentPrice(symbol);
+        var priceSignalResult = new PriceSignal(candlesticks, multiplier, currentPrice).GetSignal();
+
+        if (volumeSignalResult.VolumeDirection == VolumeDirectionType.Positive
+            &&
+            volumeSignalResult.Status == VolumeStatus.HighVolume
+            //&&
+            //priceSignalResult.Signal == SignalType.Buy
+            )
         {
-            long.TryParse(candleStick[0], out long openTime);
-            decimal.TryParse(candleStick[1].Replace('.', ','), out decimal openPrice);
-            decimal.TryParse(candleStick[2].Replace('.', ','), out decimal highPrice);
-            decimal.TryParse(candleStick[3].Replace('.', ','), out decimal lowPrice);
-            decimal.TryParse(candleStick[4].Replace('.', ','), out decimal closePrice);
-            decimal.TryParse(candleStick[5].Replace('.', ','), out decimal volume);
-            long.TryParse(candleStick[6], out long closeTime);
-            decimal.TryParse(candleStick[7].Replace('.', ','), out decimal quoteAssetVolume);
-            int.TryParse(candleStick[8], out int numberOfTrades);
-            decimal.TryParse(candleStick[9].Replace('.', ','), out decimal takerBuyBaseAssetVolume);
-            decimal.TryParse(candleStick[10].Replace('.', ','), out decimal takerBuyQuoteAssetVolume);
-
-            Candlestick candle = new Candlestick
-            {
-                OpenTime = openTime,
-                OpenPrice = openPrice,
-                HighPrice = highPrice,
-                LowPrice = lowPrice,
-                ClosePrice = closePrice,
-                Volume = volume,
-                CloseTime = closeTime,
-                QuoteAssetVolume = quoteAssetVolume,
-                NumberOfTrades = numberOfTrades,
-                TakerBuyBaseAssetVolume = takerBuyBaseAssetVolume,
-                TakerBuyQuoteAssetVolume = takerBuyQuoteAssetVolume,
-                Ignore = candleStick[11]
-            };
-
-            list.Add(candle);
-        }
-
-        var avaregeVolume = list.Average(x => x.Volume);
-        var sumDeviationSquare = list.Sum(x =>
-        {
-            return (avaregeVolume - x.Volume) * (avaregeVolume - x.Volume);
-        });
-        var variance = sumDeviationSquare / list.Count();
-        double.TryParse(variance.ToString(), out double varianceD);
-        var standartDeviation = Math.Sqrt(varianceD);
-
-        var overVolumeCandles = list.Where(x => x.Volume > avaregeVolume + Convert.ToDecimal(standartDeviation)).ToList();
-
-        var dates = overVolumeCandles.Select(x =>
-        {
-            DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(x.OpenTime);
-            DateTime dateTime = dateTimeOffset.LocalDateTime;
-            return dateTime;
-        }).ToList();
-
-        var dateNow = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, 0, 0);
-
-        if (dates.Contains(dateNow))
-        {
-            pairs.Add(symbol);
-
-            var yon = list.Last().OpenPrice > list.Last().ClosePrice ? "Negatif" : "Pozitif";
-            Console.WriteLine($"Sembol: {symbol} Tarih: {DateTimeOffset.FromUnixTimeMilliseconds(list.Last().OpenTime).LocalDateTime} Yön: {yon} " +
-                $"Hacim: {list.Last().Volume} ; Standart Sapma Hacim: {avaregeVolume + Convert.ToDecimal(standartDeviation)}");
+            Console.WriteLine($"Sembol: {symbol} Tarih: {candlesticks.Last().OpenTimeDate} /n" +
+                $"/t Hacim: {volumeSignalResult.CurrentVolume} ; Hacim Ortalama: {volumeSignalResult.AverageVolume} ; Hacim Limit: {volumeSignalResult.LimitVolume}" +
+                $"/t Fiyat: {currentPrice} ; Fiyat Ortalama: {priceSignalResult.AveragePrice} ; Fiyat Limit Alt: {priceSignalResult.LimitBuyPrice} ; Fiyat Limit Üst: {priceSignalResult.LimitSellPrice} /n");
         }
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Bir hata oluştu! Sembol: {symbol}");
+        Console.WriteLine(ex.Message);
+    }
+}
+
+static async Task<decimal> GetCurrentPrice(string symbol)
+{
+    var tickerPriceClient = new TickerPriceClient(symbol);
+    var tickerPrice = await tickerPriceClient.Get();
+
+    return tickerPrice?.Price ?? throw new Exception($"Anlık Fiyat Bilgisi çekilemedi! Sembol: {symbol}");
 }
