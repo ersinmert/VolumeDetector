@@ -7,28 +7,39 @@ using VolumeDetector.Signals.PriceSignal;
 using VolumeDetector.Signals.Volume;
 using VolumeDetector.TickerPrice;
 
-var exchangeInfoClient = new ExchangeInfoClient();
-var exchangeInfo = await exchangeInfoClient.Get();
-
-var usdtSymbols = exchangeInfo?.Symbols?.Where(x =>
+int counter = 1;
+Console.WriteLine("Program Başladı!");
+while (true)
 {
-    Regex regex = new Regex("USDT$");
-    if (string.IsNullOrEmpty(x.Name))
-        return false;
+    Console.WriteLine("Döngü Başladı!");
+    var exchangeInfoClient = new ExchangeInfoClient();
+    var exchangeInfo = await exchangeInfoClient.Get();
 
-    return regex.IsMatch(x.Name) && x.IsActive;
-}).ToList();
-
-if (usdtSymbols?.Any() == true)
-{
-    foreach (var symbol in usdtSymbols)
+    var usdtSymbols = exchangeInfo?.Symbols?.Where(x =>
     {
-        await CheckSignal(symbol?.Name);
-    }
-}
+        Regex regex = new Regex("USDT$");
+        if (string.IsNullOrEmpty(x.Name))
+            return false;
 
-Console.WriteLine("Herhangi bir tuşa basınız...");
-Console.ReadKey();
+        return regex.IsMatch(x.Name) && x.IsActive;
+    }).ToList();
+
+    if (usdtSymbols?.Any() == true)
+    {
+        foreach (var symbol in usdtSymbols)
+        {
+            await CheckSignal(symbol?.Name);
+        }
+    }
+
+
+    Console.WriteLine($"Çalışma sayısı: {counter}");
+    counter++;
+
+    Console.WriteLine("Döngü Bitti!");
+    Console.WriteLine("Tekrar başlamak için beklenecek süre: 30 sn");
+    Thread.Sleep(30000); // 30sn beklet
+}
 
 static async Task CheckSignal(string? symbol)
 {
@@ -53,9 +64,19 @@ static async Task CheckSignal(string? symbol)
             //priceSignalResult.Signal == SignalType.Buy
             )
         {
-            Console.WriteLine($"Sembol: {symbol} Tarih: {candlesticks.Last().OpenTimeDate} /n" +
-                $"/t Hacim: {volumeSignalResult.CurrentVolume} ; Hacim Ortalama: {volumeSignalResult.AverageVolume} ; Hacim Limit: {volumeSignalResult.LimitVolume}" +
-                $"/t Fiyat: {currentPrice} ; Fiyat Ortalama: {priceSignalResult.AveragePrice} ; Fiyat Limit Alt: {priceSignalResult.LimitBuyPrice} ; Fiyat Limit Üst: {priceSignalResult.LimitSellPrice} /n");
+            var symbolText = $"Sembol: {symbol} Tarih: {candlesticks.Last().OpenTimeDate}";
+            var volumeText = $"Hacim: {volumeSignalResult.CurrentVolume} ; Hacim Ortalama: {volumeSignalResult.AverageVolume} ; Hacim Limit: {volumeSignalResult.LimitVolume}";
+            var priceText = $"Fiyat: {currentPrice} ; Fiyat Ortalama: {priceSignalResult.AveragePrice} ; Fiyat Limit Alt: {priceSignalResult.LimitBuyPrice} ; Fiyat Limit Üst: {priceSignalResult.LimitSellPrice}";
+
+            var fullText = symbolText + "\n" + "\t" + volumeText + "\n" + "\t" + priceText + "\n";
+
+            Console.WriteLine(fullText);
+
+            string filePath = "C:\\Repos\\VolumeDetector\\output.txt";
+            using (StreamWriter writer = new StreamWriter(filePath, true))
+            {
+                writer.WriteLine(fullText);
+            }
         }
     }
     catch (Exception ex)
