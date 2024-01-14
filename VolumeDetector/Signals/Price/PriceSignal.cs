@@ -3,10 +3,10 @@
     public class PriceSignal
     {
         private readonly List<Candlestick.CandlestickDto> _candlesticks;
-        private readonly int _multiplier;
+        private readonly decimal _multiplier;
         private readonly decimal _currentPrice;
 
-        public PriceSignal(List<Candlestick.CandlestickDto> candlesticks, int multiplier, decimal currentPrice)
+        public PriceSignal(List<Candlestick.CandlestickDto> candlesticks, decimal multiplier, decimal currentPrice)
         {
             _candlesticks = candlesticks;
             _multiplier = multiplier;

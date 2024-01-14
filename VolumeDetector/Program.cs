@@ -48,7 +48,7 @@ static async Task CheckSignal(string? symbol)
         if (string.IsNullOrEmpty(symbol)) return;
 
         string interval = "15m";
-        int multiplier = 3;
+        decimal multiplier = 2.5M;
         var candlestickClient = new CandlestickClient(symbol, interval);
         var candlesticks = await candlestickClient.Get();
 
@@ -65,7 +65,7 @@ static async Task CheckSignal(string? symbol)
             )
         {
             var symbolText = $"Sembol: {symbol} Tarih: {candlesticks.Last().OpenTimeDate}";
-            var volumeText = $"Hacim: {volumeSignalResult.CurrentVolume} ; Hacim Ortalama: {volumeSignalResult.AverageVolume} ; Hacim Limit: {volumeSignalResult.LimitVolume}";
+            var volumeText = $"Hacim: {volumeSignalResult.CurrentVolume} ; Hacim Ortalama: {volumeSignalResult.AverageVolume} ; Hacim Limit: {volumeSignalResult.LimitVolume} ; Hacim Artışı: %{volumeSignalResult.VolumeIncreasePercent}";
             var priceText = $"Fiyat: {currentPrice} ; Fiyat Ortalama: {priceSignalResult.AveragePrice} ; Fiyat Limit Alt: {priceSignalResult.LimitBuyPrice} ; Fiyat Limit Üst: {priceSignalResult.LimitSellPrice}";
 
             var fullText = symbolText + "\n" + "\t" + volumeText + "\n" + "\t" + priceText + "\n";
