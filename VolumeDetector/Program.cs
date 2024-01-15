@@ -55,6 +55,7 @@ static async Task CheckSignal(string? symbol)
         var volumeSignalResult = new VolumeSignal(candlesticks, multiplier).GetSignal();
 
         var currentPrice = await GetCurrentPrice(symbol);
+        var now = DateTime.Now;
         var priceSignalResult = new PriceSignal(candlesticks, multiplier, currentPrice).GetSignal();
 
         if (volumeSignalResult.VolumeDirection == VolumeDirectionType.Positive
@@ -64,7 +65,7 @@ static async Task CheckSignal(string? symbol)
             //priceSignalResult.Signal == SignalType.Buy
             )
         {
-            var symbolText = $"Sembol: {symbol} Tarih: {candlesticks.Last().OpenTimeDate}";
+            var symbolText = $"Sembol: {symbol} Tarih: {candlesticks.Last().OpenTimeDate} Anlık Tarih: {now}";
             var volumeText = $"Hacim: {volumeSignalResult.CurrentVolume} ; Hacim Ortalama: {volumeSignalResult.AverageVolume} ; Hacim Limit: {volumeSignalResult.LimitVolume} ; Hacim Artışı: %{volumeSignalResult.VolumeIncreasePercent}";
             var priceText = $"Fiyat: {currentPrice} ; Fiyat Ortalama: {priceSignalResult.AveragePrice} ; Fiyat Limit Alt: {priceSignalResult.LimitBuyPrice} ; Fiyat Limit Üst: {priceSignalResult.LimitSellPrice}";
 
