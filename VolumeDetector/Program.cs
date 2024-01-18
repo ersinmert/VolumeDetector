@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using VolumeDetector.Candlestick;
 using VolumeDetector.ExchageInfo;
@@ -9,36 +10,47 @@ using VolumeDetector.TickerPrice;
 
 int counter = 1;
 Console.WriteLine("Program Başladı!");
+
+var exchangeInfoClient = new ExchangeInfoClient();
+var exchangeInfo = await exchangeInfoClient.Get();
+
+var usdtSymbols = exchangeInfo?.Symbols?.Where(x =>
+{
+    Regex regex = new Regex("USDT$");
+    if (string.IsNullOrEmpty(x.Name))
+        return false;
+
+    return regex.IsMatch(x.Name) && x.IsActive;
+}).ToList();
+
 while (true)
 {
     Console.WriteLine("Döngü Başladı!");
-    var exchangeInfoClient = new ExchangeInfoClient();
-    var exchangeInfo = await exchangeInfoClient.Get();
 
-    var usdtSymbols = exchangeInfo?.Symbols?.Where(x =>
-    {
-        Regex regex = new Regex("USDT$");
-        if (string.IsNullOrEmpty(x.Name))
-            return false;
+    var timer = new Stopwatch();
+    timer.Start();
 
-        return regex.IsMatch(x.Name) && x.IsActive;
-    }).ToList();
-
+    var tasks = new List<Task>();
     if (usdtSymbols?.Any() == true)
     {
         foreach (var symbol in usdtSymbols)
         {
-            await CheckSignal(symbol?.Name);
+            tasks.Add(CheckSignal(symbol?.Name));
+            //await CheckSignal(symbol?.Name);
         }
-    }
 
+        await Task.WhenAll(tasks);
+    }
 
     Console.WriteLine($"Çalışma sayısı: {counter}");
     counter++;
 
     Console.WriteLine("Döngü Bitti!");
-    Console.WriteLine("Tekrar başlamak için beklenecek süre: 30 sn");
-    Thread.Sleep(30000); // 30sn beklet
+    timer.Stop();
+    var time = timer.Elapsed.TotalSeconds;
+    Console.WriteLine($"Döngüde Toplam Süre: {time}sn");
+    Console.WriteLine("Tekrar başlamak için beklenecek süre: 10 sn");
+    Thread.Sleep(10000); // 10sn beklet
 }
 
 static async Task CheckSignal(string? symbol)
@@ -46,10 +58,13 @@ static async Task CheckSignal(string? symbol)
     try
     {
         if (string.IsNullOrEmpty(symbol)) return;
+        await Console.Out.WriteLineAsync($"{symbol} için kontrol başladı!");
+        var timer = new Stopwatch();
+        timer.Start();
 
         string interval = "15m";
         decimal multiplier = 2.5M;
-        var candlestickClient = new CandlestickClient(symbol, interval);
+        var candlestickClient = new CandlestickClient(symbol, interval, 60);
         var candlesticks = await candlestickClient.Get();
 
         var volumeSignalResult = new VolumeSignal(candlesticks, multiplier).GetSignal();
@@ -79,6 +94,10 @@ static async Task CheckSignal(string? symbol)
                 writer.WriteLine(fullText);
             }
         }
+
+        timer.Stop();
+        var time = timer.Elapsed.TotalSeconds;
+        await Console.Out.WriteLineAsync($"{symbol} için süre: {time}sn");
     }
     catch (Exception ex)
     {

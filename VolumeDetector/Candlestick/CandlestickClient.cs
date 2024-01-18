@@ -4,11 +4,11 @@ namespace VolumeDetector.Candlestick
 {
     public class CandlestickClient
     {
-        private string _candlestickUrl = "https://api.binance.com/api/v3/klines?symbol={0}&interval={1}";
+        private string _candlestickUrl = "https://api.binance.com/api/v3/klines?symbol={0}&interval={1}&limit={2}";
 
-        public CandlestickClient(string symbol, string interval)
+        public CandlestickClient(string symbol, string interval, int limit = 500)
         {
-            _candlestickUrl = string.Format(_candlestickUrl, symbol, interval);
+            _candlestickUrl = string.Format(_candlestickUrl, symbol, interval, limit);
         }
 
         public async Task<List<CandlestickDto>> Get()

@@ -16,7 +16,7 @@
         public PriceSignalResult GetSignal()
         {
             var prices = _candlesticks.Select(x => x.Ohlc4).ToList();
-            var priceSd = new StandardDeviation.StandardDeviation(prices);
+            var priceSd = new StandardDeviation.StandardDeviation(prices, 50);
             var priceSdResult = priceSd.Calculate();
 
             var limitBuyPrice = priceSdResult.Average - (priceSdResult.StandardDeviation * _multiplier);
