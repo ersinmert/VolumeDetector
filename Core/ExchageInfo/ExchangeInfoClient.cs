@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace VolumeDetector.ExchageInfo
+namespace Core.ExchageInfo
 {
     public class ExchangeInfoClient
     {

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace VolumeDetector.Candlestick
+namespace Core.Candlestick
 {
     public class CandlestickClient
     {

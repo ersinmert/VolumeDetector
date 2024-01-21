@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace VolumeDetector.TickerPrice
+namespace Core.TickerPrice
 {
     public class TickerPriceClient
     {

@@ -1,4 +1,4 @@
-﻿namespace VolumeDetector.Candlestick
+﻿namespace Core.Candlestick
 {
     public static class CandlestickExtension
     {

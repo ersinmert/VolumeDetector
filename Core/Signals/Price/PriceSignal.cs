@@ -1,4 +1,10 @@
-﻿namespace VolumeDetector.Signals.PriceSignal
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Core.Signals.Price
 {
     public class PriceSignal
     {

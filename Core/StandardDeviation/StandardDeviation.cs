@@ -1,4 +1,4 @@
-﻿namespace VolumeDetector.StandardDeviation
+﻿namespace Core.StandardDeviation
 {
     public class StandardDeviation
     {

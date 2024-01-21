@@ -1,4 +1,4 @@
-﻿namespace VolumeDetector.Signals.PriceSignal
+﻿namespace Core.Signals.Price
 {
     public class PriceSignalResult
     {

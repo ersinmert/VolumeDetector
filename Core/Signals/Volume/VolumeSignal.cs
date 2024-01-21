@@ -1,4 +1,4 @@
-﻿namespace VolumeDetector.Signals.Volume
+﻿namespace Core.Signals.Volume
 {
     public class VolumeSignal
     {

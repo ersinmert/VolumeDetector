@@ -1,4 +1,4 @@
-﻿namespace VolumeDetector.TickerPrice
+﻿namespace Core.TickerPrice
 {
     public class TickerPriceDto
     {

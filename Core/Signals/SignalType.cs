@@ -1,4 +1,4 @@
-﻿namespace VolumeDetector.Signals
+﻿namespace Core.Signals
 {
     public enum SignalType
     {

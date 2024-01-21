@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
-using System.Text.Json;
 
-namespace VolumeDetector.ExchageInfo
+namespace Core.ExchageInfo
 {
     public class ExchangeInfoDto
     {
@@ -44,10 +43,12 @@ namespace VolumeDetector.ExchageInfo
         [JsonProperty("status")]
         public string? Status { get; set; }
 
-        public bool IsActive { 
-            get {
+        public bool IsActive
+        {
+            get
+            {
                 return Status == "TRADING";
-            } 
+            }
         }
     }
 }

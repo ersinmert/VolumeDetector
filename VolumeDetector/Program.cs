@@ -1,12 +1,12 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using Core.Candlestick;
+using Core.ExchageInfo;
+using Core.Signals.Price;
+using Core.Signals.Volume;
+using Core.TickerPrice;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using VolumeDetector.Candlestick;
-using VolumeDetector.ExchageInfo;
-using VolumeDetector.Signals.PriceSignal;
-using VolumeDetector.Signals.Volume;
-using VolumeDetector.TickerPrice;
 
 int counter = 1;
 Console.WriteLine("Program Başladı!");
